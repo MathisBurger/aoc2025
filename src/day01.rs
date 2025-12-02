@@ -12,24 +12,34 @@ pub fn solve(input: String) {
 
     let mut pos = 50;
     let mut zero_count = 0;
+    let mut any_zero_count = 0;
 
     for turn in turns {
-        match turn {
-            ('L', steps) => pos -= steps,
-            ('R', steps) => pos += steps,
-            _ => {}
-        }
+        let steps = match turn {
+            ('L', steps) => -steps,
+            ('R', steps) => steps,
+            _ => 0,
+        };
+        let cleared_steps = steps % 100;
+        any_zero_count += steps.abs() / 100;
+        let pos_bef = pos;
+        pos += cleared_steps;
 
-        if pos < 0 || pos > 99 {
-            pos %= 100;
-        }
         if pos < 0 {
-            pos = 100 + pos;
+            pos += 100;
+        }
+        if pos > 99 {
+            pos %= 100;
         }
         if pos == 0 {
             zero_count += 1;
         }
+
+        if pos - cleared_steps != pos_bef && pos_bef + cleared_steps != 100 && pos_bef != 0 {
+            any_zero_count += 1;
+        }
     }
 
     println!("Part 1: {}", zero_count);
+    println!("Part 2: {}", zero_count + any_zero_count);
 }
