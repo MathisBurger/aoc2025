@@ -1,3 +1,6 @@
+mod day01;
+mod generic;
+
 fn main() {
-    println!("Hello, world!");
+    let input = generic::read_input();
 }
