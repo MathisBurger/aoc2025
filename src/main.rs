@@ -1,8 +1,8 @@
-mod day05;
+mod day06;
 mod generic;
 
 fn main() {
     let input = generic::read_input();
 
-    day05::solve(input);
+    day06::solve(input);
 }
