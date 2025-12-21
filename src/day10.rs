@@ -7,6 +7,63 @@ struct Maschine {
     pub joltage_req: Vec<usize>,
 }
 
+#[derive(Clone)]
+struct ButtonCombination {
+    counter: Vec<usize>,
+    nb_pressed_buttons: usize,
+}
+
+trait Counter {
+    fn is_zero(&self) -> bool;
+    fn smaller_or_equal(&self, other: &[usize]) -> bool;
+    fn equals_modulo2(&self, other: &[usize]) -> bool;
+    fn solve2(&self, combinations: &[ButtonCombination]) -> Option<usize>;
+}
+
+impl Counter for Vec<usize> {
+    fn is_zero(&self) -> bool {
+        self.iter().all(|&x| x == 0)
+    }
+
+    fn smaller_or_equal(&self, other: &[usize]) -> bool {
+        self.iter().zip(other).all(|(&a, &b)| a <= b)
+    }
+
+    fn equals_modulo2(&self, other: &[usize]) -> bool {
+        self.iter().zip(other).all(|(&a, &b)| a % 2 == b % 2)
+    }
+
+    fn solve2(&self, combinations: &[ButtonCombination]) -> Option<usize> {
+        if self.is_zero() {
+            return Some(0);
+        }
+
+        let mut min_cost = None;
+
+        for comb in combinations {
+            if !comb.counter.smaller_or_equal(self) {
+                continue;
+            }
+            if !comb.counter.equals_modulo2(self) {
+                continue;
+            }
+
+            let next_counter: Vec<usize> = self
+                .iter()
+                .zip(&comb.counter)
+                .map(|(&a, &b)| (a - b) / 2)
+                .collect();
+
+            if let Some(rec_cost) = next_counter.solve2(combinations) {
+                let total_cost: usize = 2 * rec_cost + comb.nb_pressed_buttons;
+                min_cost = Some(min_cost.map_or(total_cost, |c: usize| c.min(total_cost)));
+            }
+        }
+
+        min_cost
+    }
+}
+
 impl Maschine {
     pub fn solve(&self) -> Option<usize> {
         let n_lamps = self.lamps.len();
@@ -122,6 +179,45 @@ impl Maschine {
             .filter_map(|(i, &val)| if val == 1 { Some(i) } else { None })
             .collect()
     }
+
+    pub fn solve_part2(&self) -> Option<usize> {
+        let m = self.joltage_req.len();
+
+        // Generate all button combinations
+        let combinations = self.all_combinations(m);
+
+        // Solve recursively
+        self.joltage_req.clone().solve2(&combinations)
+    }
+
+    fn all_combinations(&self, m: usize) -> Vec<ButtonCombination> {
+        let n_buttons = self.buttons.len();
+        let num_combinations = 1 << n_buttons;
+        let mut result = Vec::with_capacity(num_combinations);
+
+        for mask in 0..num_combinations {
+            let mut counter = vec![0; m];
+            let mut nb_pressed = 0;
+
+            for (j, button) in self.buttons.iter().enumerate() {
+                if (mask & (1 << j)) != 0 {
+                    nb_pressed += 1;
+                    for &idx in button {
+                        if idx < m {
+                            counter[idx] += 1;
+                        }
+                    }
+                }
+            }
+
+            result.push(ButtonCombination {
+                counter,
+                nb_pressed_buttons: nb_pressed,
+            });
+        }
+
+        result
+    }
 }
 
 pub fn solve(input: String) {
@@ -133,6 +229,9 @@ pub fn solve(input: String) {
     for masch in maschines {
         if let Some(min) = masch.solve() {
             sum += min;
+        }
+        if let Some(min2) = masch.solve_part2() {
+            sum2 += min2;
         }
     }
     println!("Part 1: {}", sum);
