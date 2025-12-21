@@ -227,9 +227,9 @@ pub fn solve(input: String) {
     let mut sum2 = 0;
 
     for masch in maschines {
-        if let Some(min) = masch.solve() {
-            sum += min;
-        }
+        //if let Some(min) = masch.solve() {
+        //    sum += min;
+        //}
         if let Some(min2) = masch.solve_part2() {
             sum2 += min2;
         }
